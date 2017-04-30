@@ -20,4 +20,6 @@ import lombok.experimental.FieldDefaults;
 public class TSPResponse
 {
     List<List<Integer>> uniqueFeasibleSets;
+    int[][] distances;
+    int maxDistance;
 }

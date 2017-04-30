@@ -7,58 +7,77 @@ import cz.barush.hdsp.entity.TSPResponse;
 import cz.barush.hdsp.wtf.ILP;
 import cz.barush.hdsp.wtf.TSP;
 import gurobi.GRB;
+import gurobi.GRBEnv;
 import gurobi.GRBException;
+import gurobi.GRBModel;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("api")
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
-public class Endpoint {
+public class Endpoint
+{
 
     @POST
     @Path("compute")
-    public Response getInput(Input input) {
+    public Response getInput(Input input)
+    {
         String output = "Jersey say : ";
+
         return Response.status(200).entity(output).build();
     }
 
     @GET
     @Path("wut")
-    public Response get() {
+    public Response get()
+    {
         String output = "Jersey say : ";
         return Response.status(200).entity(output).build();
     }
 
     @POST
     @Path("stigler")
-    public Response getInput(ILPInput input) {
-        try {
-            final List<List<Integer>> lists = ILP.solveStiglersProblem(input.getAllFood(), input.getBalancedNutrients());
+    public Response getInput(ILPInput input)
+    {
+        try
+        {
+            List<List<Double>> lists = ILP.solveStiglersProblem(input.getAllFood(), input.getBalancedNutrients());
             int obj = (int) ILP.model.get(GRB.DoubleAttr.ObjVal);
             System.out.println("");
-            return Response.status(200).entity(new ILPResponse()).build();
-        } catch (GRBException e) {
-            return Response.status(500).entity("daco sa pojebalo").build();
+            return Response.status(200).entity(new ILPResponse()
+                    .setGramsToBuy(new ArrayList<>())
+                    .setObjectValue(obj)).build();
+        }
+        catch (GRBException e)
+        {
+            return Response.status(500).entity(e.getMessage()).build();
         }
 
     }
 
     @POST
-    @Path("tsp")
-    public Response getInput(TSPResponse input) {
-//        try {
-//            final List<List<Integer>> lists = ILP.solveStiglersProblem(input.getAllFood(), input.getBalancedNutrients());
-//            int obj = (int) ILP.model.get(GRB.DoubleAttr.ObjVal);
-//            System.out.println("");
-//
-//        } catch (GRBException e) {
-//            e.printStackTrace();
-//        }
-        return Response.status(200).entity(new ILPResponse()).build();
-    }
+    @Path("tsp-wtf")
+    public Response getInput(TSPResponse input)
+    {
+        try
+        {
+            List<List<Integer>> uniqueFeasibleList = new ArrayList<>();
+            for (List<Integer> list: input.getUniqueFeasibleSets())
+            {
+                if(TSP.solveTsp(list, input.getDistances()) <= input.getMaxDistance())uniqueFeasibleList.add(list);
+            }
+            return Response.status(200).entity(new TSPResponse()
+                    .setUniqueFeasibleSets(uniqueFeasibleList)).build();
 
+        }
+        catch (GRBException e)
+        {
+            return Response.status(500).entity(e.getMessage()).build();
+        }
+    }
 }
