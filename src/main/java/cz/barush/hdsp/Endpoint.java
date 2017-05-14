@@ -69,7 +69,11 @@ public class Endpoint
             List<List<Integer>> uniqueFeasibleList = new ArrayList<>();
             for (List<Integer> list: input.getUniqueFeasibleSets())
             {
-                if(TSP.solveTsp(list, input.getDistances()) <= input.getMaxDistance())uniqueFeasibleList.add(list);
+                int distance = TSP.solveTsp(list, input.getDistances());
+                if(distance <= input.getMaxDistance())
+                {
+                    uniqueFeasibleList.add(list);
+                }
             }
             return Response.status(200).entity(new TSPResponse()
                     .setUniqueFeasibleSets(uniqueFeasibleList)).build();
